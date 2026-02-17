@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>ALPR Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            background: #ffffff;
+            color: #333;
+            width: 100%;
+            max-width: 1000px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        h2, h3 {
+            text-align: center;
+            color: #1565c0;
+        }
+
+        form {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: linear-gradient(45deg, #1e88e5, #42a5f5);
+            border: none;
+            padding: 10px 25px;
+            color: white;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33,150,243,0.4);
+        }
+
+        .comparison-wrapper {
+            margin-top: 30px;
+        }
+
+        .comparison {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .image-box {
+            flex: 1;
+            min-width: 280px;
+            background: #f5f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .image-box img {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 8px;
+            border: 2px solid #1e88e5;
+        }
+
+        .plate-info {
+            margin-top: 10px;
+            font-size: 15px;
+        }
+
+        .no-result {
+            text-align: center;
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        @media(max-width: 768px){
+            .comparison {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h2>🚘 ALPR License Plate Detection</h2>
+
+    <form id="uploadForm">
+        <input type="file" name="file" id="fileInput" accept="image/*" required>
+        <br><br>
+        <button type="submit">Predict</button>
+    </form>
+
+    <hr>
+
+    <h3>Model Comparison</h3>
+    <div id="results"></div>
+
+</div>
+
+<script>
+document.getElementById("uploadForm").onsubmit = async function(e) {
+    e.preventDefault();
+
+    const fileInput = document.getElementById("fileInput");
+    const file = fileInput.files[0];
+
+    const formData = new FormData(this);
+
+    const response = await fetch("/predict", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    const resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = "";
+
+    if (!data.plates || data.plates.length === 0) {
+        resultsDiv.innerHTML = "<p class='no-result'>❌ No plate detected</p>";
+        return;
+    }
+
+    // แสดงภาพต้นฉบับ
+    const originalImgURL = URL.createObjectURL(file);
+
+    data.plates.forEach(plate => {
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "comparison-wrapper";
+
+        const comparison = document.createElement("div");
+        comparison.className = "comparison";
+
+        // Original Image
+        const originalBox = document.createElement("div");
+        originalBox.className = "image-box";
+        originalBox.innerHTML = "<h4>📷 Original Image</h4>";
+
+        const originalImg = document.createElement("img");
+        originalImg.src = originalImgURL;
+
+        originalBox.appendChild(originalImg);
+
+        // Detected Plate
+        const detectedBox = document.createElement("div");
+        detectedBox.className = "image-box";
+        detectedBox.innerHTML = "<h4>🔍 Detected Plate</h4>";
+
+        const detectedImg = document.createElement("img");
+        detectedImg.src = "data:image/jpeg;base64," + plate.preview;
+
+        const info = document.createElement("div");
+        info.className = "plate-info";
+        info.innerHTML = "<b>ทะเบียน:</b> " + plate.series_number +
+                         "<br><b>จังหวัด:</b> " + plate.province;
+
+        detectedBox.appendChild(detectedImg);
+        detectedBox.appendChild(info);
+
+        comparison.appendChild(originalBox);
+        comparison.appendChild(detectedBox);
+        wrapper.appendChild(comparison);
+        resultsDiv.appendChild(wrapper);
+    });
+};
+</script>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['license plate']
+
+roboflow:
+  workspace: lab3-bvgab
+  project: thai-motorcycle-license-plate-mrdvh
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/lab3-bvgab/thai-motorcycle-license-plate-mrdvh/dataset/2

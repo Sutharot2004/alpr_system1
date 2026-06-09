@@ -16,6 +16,7 @@ import asyncio
 import math
 
 app = FastAPI()
+init_db()
 templates = Jinja2Templates(directory="templates")
 
 plate_model = None
@@ -166,17 +167,33 @@ CLASS_MAP = {
 
 
 # =============================
-@app.on_event("startup")
-def startup():
-    load_models()
-    init_db()
+car_model = None
+
+def get_car_model():
+    global car_model
+    if car_model is None:
+        car_model = YOLO("runs/detect/car_plate_v1/weights/best.pt")
+    return car_model
+
+##@app.on_event("startup")
+##def startup():
+  ##  load_models()
+    ## init_db()
+    
+def get_ocr_model():
+    global ocr_model
+
+    if ocr_model is None:
+        ocr_model = YOLO("runs/detect/ocr_v1/weights/best.pt")
+
+    return ocr_model
 
 
-def load_models():
-    global car_model, motor_model, ocr_model, class_names
-    car_model = YOLO("runs/detect/car_plate_v1/weights/best.pt")
-    ocr_model = YOLO("runs/detect/ocr_v1/weights/best.pt")
-    class_names = ocr_model.names
+#def load_models():
+ #   global car_model, motor_model, ocr_model, class_names
+  #  car_model = YOLO("runs/detect/car_plate_v1/weights/best.pt")
+   # ocr_model = YOLO("runs/detect/ocr_v1/weights/best.pt")
+    #class_names = ocr_model.names
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -199,19 +216,22 @@ def get_best_detection(results):
 
     return best_conf, best_box
 
-
 def detect_plate_stable(img, attempts=2):
+    model = get_car_model()
+
     best_conf = 0
     best_box = None
+
     for _ in range(attempts):
-        results = car_model(img, conf=0.25, verbose=False)
+        results = model(img, conf=0.25, verbose=False)
+
         conf, box = get_best_detection(results)
+
         if box is not None and conf > best_conf:
             best_conf = conf
             best_box = box
 
     return best_conf, best_box
-
 
 def deskew_plate(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -489,14 +509,16 @@ def parse_car_top_row(top_row):
 
 
 def run_ocr_with_fallback(ocr_input, plate_type):
-    primary = ocr_model(ocr_input, conf=0.30)
+    ocr = get_ocr_model()
+    primary = ocr(ocr_input, conf=0.30)
     primary_items = decode_ocr_items(primary)
     primary_top, primary_bottom = split_rows(primary_items)
 
     avg_conf = np.mean([item["conf"] for item in primary_items]) if primary_items else 0
 
     if plate_type == "car" and avg_conf < 0.5 and len(primary_items) < 6:
-        retry = ocr_model(ocr_input, conf=0.22)
+        ocr = get_ocr_model()
+        retry = ocr(ocr_input, conf=0.22)
         retry_items = decode_ocr_items(retry)
         retry_top, retry_bottom = split_rows(retry_items)
 
@@ -517,7 +539,7 @@ async def detect_plate(file: UploadFile = File(...)):
     scale = 640 / max(h, w)
     img_small = cv2.resize(img, (int(w * scale), int(h * scale)))
 
-    car_results = car_model(img_small, conf=0.30)
+    car_results = get_car_model()(img_small, conf=0.30)
     car_conf, car_box = get_best_detection(car_results)
 
     if car_box is None:
@@ -630,7 +652,7 @@ async def predict(file: UploadFile = File(...)):
 
     plate_crop = img[y1:y2, x1:x2]
     # resize ก่อน
-    plate_crop = cv2.resize(plate_crop, (320, 160))
+    plate_crop = cv2.resize(plate_crop, (256, 128))
 
     # Preprocess
     try:

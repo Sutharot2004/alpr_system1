@@ -1,191 +1,354 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <title>ALPR Demo</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            color: #ffffff;
-            display: flex;
-            justify-content: center;
-            padding: 40px 20px;
-        }
-
-        .container {
-            background: #ffffff;
-            color: #333;
-            width: 100%;
-            max-width: 1000px;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-        }
-
-        h2, h3 {
-            text-align: center;
-            color: #1565c0;
-        }
-
-        form {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        button {
-            background: linear-gradient(45deg, #1e88e5, #42a5f5);
-            border: none;
-            padding: 10px 25px;
-            color: white;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(33,150,243,0.4);
-        }
-
-        .comparison-wrapper {
-            margin-top: 30px;
-        }
-
-        .comparison {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .image-box {
-            flex: 1;
-            min-width: 280px;
-            background: #f5f9ff;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-
-        .image-box img {
-            width: 100%;
-            max-width: 400px;
-            border-radius: 8px;
-            border: 2px solid #1e88e5;
-        }
-
-        .plate-info {
-            margin-top: 10px;
-            font-size: 15px;
-        }
-
-        .no-result {
-            text-align: center;
-            color: #d32f2f;
-            font-weight: bold;
-        }
-
-        @media(max-width: 768px){
-            .comparison {
-                flex-direction: column;
-                align-items: center;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>ALPR Smart Parking — System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;600&display=swap');
+    body { 
+      font-family: 'Sarabun', sans-serif; 
+      background-color: #f8fafc; 
+      color: #1e293b; 
+    }
+    .glass-card { 
+      background: white; border: 1px solid #e2e8f0; 
+      border-radius: 12px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+    }
+    .btn-primary { 
+      background: #2563eb; color: white; 
+      padding: 8px 16px; border-radius: 8px; 
+      font-weight: 500; transition: all 0.2s; 
+      cursor: pointer; border: none; 
+    }
+    .btn-primary:hover { 
+      background: #1d4ed8; 
+    }
+    .btn-secondary { 
+      background: white; 
+      border: 1px solid #e2e8f0; 
+      color: #64748b; 
+      padding: 8px 16px; 
+      border-radius: 8px; transition: all 0.2s; 
+      cursor: pointer; 
+    }
+    .btn-secondary:hover { 
+      background: #f1f5f9; 
+    }
+    th { 
+      background: #f8fafc; 
+      padding: 12px; text-align: left; 
+      font-size: 12px; color: #64748b; 
+      text-transform: uppercase; 
+      border-bottom: 2px solid #e2e8f0; 
+    }
+    td { padding: 12px; 
+      border-bottom: 1px solid #f1f5f9; 
+      font-size: 14px; 
+    }
+    .status-parked { 
+      background-color: #eff6ff; 
+      color: #2563eb; 
+      border-radius: 6px; padding: 2px 8px; 
+      font-size: 12px; 
+      font-weight: 600; 
+    }
+    .status-exited { background-color: #f0fdf4; 
+      color: #16a34a; border-radius: 6px; 
+      padding: 2px 8px; 
+      font-size: 12px; 
+      font-weight: 600; 
+    }
+  </style>
 </head>
-<body>
 
-<div class="container">
+<body class="p-6">
+  <div class="max-w-9xl mx-auto">
+    <header class="mb-8 flex justify-between items-center">
+      <h1 class="text-4xl font-bold text-slate-800"> ALPR Smart Parking</h1>
+      <div id="connStatus" class="px-3 py-1 bg-green-100 text-green-600 text-xs rounded-full font-bold">CONNECTED</div>
+    </header>
 
-    <h2>🚘 ALPR License Plate Detection</h2>
-
-    <form id="uploadForm">
-        <input type="file" name="file" id="fileInput" accept="image/*" required>
-        <br><br>
-        <button type="submit">Predict</button>
-    </form>
-
-    <hr>
-
-    <h3>Model Comparison</h3>
-    <div id="results"></div>
-
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="glass-card p-5 border-t-4 border-blue-500">
+        <div class="text-xs text-slate-400 font-bold uppercase">รถเข้าวันนี้</div>
+        <div class="text-3xl font-bold" id="sumIn">0</div>
+      </div>
+      <div class="glass-card p-5 border-t-4 border-emerald-500">
+        <div class="text-xs text-slate-400 font-bold uppercase">รถออกวันนี้</div>
+        <div class="text-3xl font-bold" id="sumOut">0</div>
+      </div>
+      <div class="glass-card p-5 border-t-4 border-amber-500">
+        <div class="text-xs text-slate-400 font-bold uppercase">จอดอยู่ตอนนี้</div>
+        <div class="text-3xl font-bold" id="sumPark">0</div>
+      </div>
+      <div class="glass-card p-5 border-t-4 border-rose-500">
+        <div class="text-xs text-slate-400 font-bold uppercase">รายได้ (฿)</div>
+        <div class="text-3xl font-bold" id="sumMoney">0</div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div class="lg:col-span-2 glass-card p-6">
+        <h3 class="font-bold mb-4 flex items-center gap-2">📷 กล้องควบคุม</h3>
+        <div class="aspect-video bg-slate-900 rounded-lg overflow-hidden relative mb-4 flex items-center justify-center">
+          <video id="video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+          <img id="uploadPreviewMain" 
+              class="hidden absolute inset-0 w-full h-full object-contain bg-black" />
+          <div id="imageModeLabel" 
+              class="hidden absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+            📁 โหมดรูปภาพ
+          </div>
+          <div id="camPlaceholder" class="absolute text-white text-sm bg-black/40 px-3 py-1 rounded">
+            กล้องปิดอยู่
+          </div>
+        </div>
+        <div class="flex gap-2 mb-6">
+          <button id="btnStart" onclick="startCamera()" class="btn-primary">▶️ เปิดกล้อง</button>
+          <button id="btnStop" onclick="stopCamera()" class="btn-secondary hidden">⏹️ ปิดกล้อง</button>
+          <button onclick="captureAndSend()" class="btn-secondary">📸 สแกนทะเบียน</button>
+          <button onclick="switchCamera()" class="btn-secondary">🔄 สลับกล้อง</button>
+          <input type="file" id="imgUpload" class="hidden" onchange="uploadImage(this)">
+          <label for="imgUpload" class="btn-secondary cursor-pointer">📁 อัปโหลด</label>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-xl border flex items-center gap-6">
+          <div class="w-40 h-16 bg-white border rounded flex items-center justify-center overflow-hidden">
+            <img id="plateImgPreview" class="hidden h-full object-contain">
+            <span id="plateImgLabel" class="text-[10px] text-slate-300">PREVIEW</span>
+          </div>
+          <div>
+            <div class="text-xl font-bold text-slate-800"><span id="plateText">---</span></div>
+            <div class="text-sm text-slate-500" id="provinceText">รอผลการสแกน...</div>
+          </div>
+          <div id="statusBadge" class="ml-auto"></div>
+        </div>
+      </div>
+      <div class="glass-card flex flex-col h-[500px]">
+        <div class="p-4 border-b font-bold bg-slate-50">⚡ กิจกรรมเรียลไทม์</div>
+        <div id="liveFeed" class="p-4 overflow-y-auto flex-1 space-y-3"></div>
+      </div>
 </div>
 
-<script>
-document.getElementById("uploadForm").onsubmit = async function(e) {
-    e.preventDefault();
+    <div class="glass-card overflow-hidden">
+      <div class="p-4 bg-slate-50 border-b flex justify-between items-center">
+        <h3 class="font-bold">📊 ประวัติการเข้า-ออก</h3>
+        <input type="date" id="dateFilter" class="btn-secondary text-xs" onchange="fetchRecords()">
+      </div>
+      <div class="overflow-x-auto max-h-96">
+        <table class="w-full">
+          <thead>
+            <tr>
+              <th>ทะเบียน</th><th>จังหวัด</th><th>เวลาเข้า</th><th>เวลาออก</th><th>นาที</th><th>บาท</th><th>สถานะ</th>
+            </tr>
+          </thead>
+          <tbody id="recordsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-    const fileInput = document.getElementById("fileInput");
-    const file = fileInput.files[0];
+  <script>
+    let videoStream = null;
+    let currentFacingMode = "environment"; // เริ่มกล้องหลัง
+    const WS_URL = `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/ws`;
 
-    const formData = new FormData(this);
+    // 1. กล้อง
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: currentFacingMode }
+        });
 
-    const response = await fetch("/predict", {
-        method: "POST",
-        body: formData
-    });
+        videoStream = stream;
+        const video = document.getElementById('video');
+        video.srcObject = stream;
 
-    const data = await response.json();
+        // 🔥 แสดง video
+        video.classList.remove('hidden');
 
-    const resultsDiv = document.getElementById("results");
-    resultsDiv.innerHTML = "";
+        // 🔥 ซ่อนรูปที่อัปโหลด
+        document.getElementById('uploadPreviewMain').classList.add('hidden');
 
-    if (!data.plates || data.plates.length === 0) {
-        resultsDiv.innerHTML = "<p class='no-result'>❌ No plate detected</p>";
-        return;
+        document.getElementById('camPlaceholder').classList.add('hidden');
+        document.getElementById('btnStart').classList.add('hidden');
+        document.getElementById('btnStop').classList.remove('hidden');
+        document.getElementById('imageModeLabel').classList.add('hidden');
+
+      } catch (err) {
+        alert("ไม่สามารถเปิดกล้องได้: " + err);
+  }
+}
+    function stopCamera() {
+      if (videoStream) {
+        videoStream.getTracks().forEach(t => t.stop());
+        document.getElementById('video').srcObject = null;
+        document.getElementById('camPlaceholder').classList.remove('hidden');
+        document.getElementById('btnStart').classList.remove('hidden');
+        document.getElementById('btnStop').classList.add('hidden');
+        document.getElementById('video').classList.add('hidden');
+      }
     }
 
-    // แสดงภาพต้นฉบับ
-    const originalImgURL = URL.createObjectURL(file);
+    function switchCamera() {
+    if (videoStream) {
+      videoStream.getTracks().forEach(track => track.stop());
+  }
 
-    data.plates.forEach(plate => {
+    currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
 
-        const wrapper = document.createElement("div");
-        wrapper.className = "comparison-wrapper";
+    startCamera();
+}
 
-        const comparison = document.createElement("div");
-        comparison.className = "comparison";
+    // 2. การส่งข้อมูล
+    async function captureAndSend() {
+      const v = document.getElementById('video');
+      if (!v.srcObject) return alert("กรุณาเปิดกล้องก่อน");
+      const canvas = document.createElement('canvas');
+      canvas.width = v.videoWidth; canvas.height = v.videoHeight;
+      canvas.getContext('2d').drawImage(v, 0, 0);
+      canvas.toBlob(sendBlob, 'image/jpeg', 0.8);
+      const imgPreview = document.getElementById('plateImgPreview');
+      imgPreview.src = canvas.toDataURL("image/jpeg");
+      imgPreview.classList.remove('hidden');
+      document.getElementById('plateImgLabel').classList.add('hidden');
+    }
 
-        // Original Image
-        const originalBox = document.createElement("div");
-        originalBox.className = "image-box";
-        originalBox.innerHTML = "<h4>📷 Original Image</h4>";
+    function uploadImage(input) {
+      if (input.files[0]) {
+        // 🔥 ปิดกล้องก่อน
+        if (videoStream) {
+          videoStream.getTracks().forEach(track => track.stop());
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          // 🔥 preview เล็ก
+          const img = document.getElementById('plateImgPreview');
+          img.src = e.target.result;
+          img.classList.remove('hidden');
+          document.getElementById('plateImgLabel').classList.add('hidden');
+          // 🔥 preview ใหญ่
+          const mainImg = document.getElementById('uploadPreviewMain');
+          mainImg.src = e.target.result;
+          mainImg.classList.remove('hidden');
+          // 🔥 ซ่อน video
+          document.getElementById('video').classList.add('hidden');
+          document.getElementById('camPlaceholder').classList.add('hidden');
+          // 🔥 แสดง label
+          document.getElementById('imageModeLabel').classList.remove('hidden');
+          // 🔥 ปรับปุ่ม
+          document.getElementById('btnStop').classList.add('hidden');
+          document.getElementById('btnStart').classList.remove('hidden');
+        };
 
-        const originalImg = document.createElement("img");
-        originalImg.src = originalImgURL;
+        reader.readAsDataURL(input.files[0]);
+        sendBlob(input.files[0]);
+  }
+}
 
-        originalBox.appendChild(originalImg);
+    async function sendBlob(blob) {
+      const fd = new FormData(); fd.append('file', blob);
+      document.getElementById('statusBadge').innerHTML = "<span class='text-blue-500 animate-pulse'>⌛ กำลังสแกน...</span>";
+      
+      try {
+        const res = await fetch('/predict', { method: 'POST', body: fd });
+        const data = await res.json();
+        if(data.plates && data.plates.length > 0) {
+          const p = data.plates[0];
+          document.getElementById('plateText').innerText = p.series_number;
+          document.getElementById('provinceText').innerText = p.province;
+          document.getElementById('plateImgPreview').src = "data:image/jpeg;base64," + p.preview;
+          document.getElementById('plateImgPreview').classList.remove('hidden');
+          document.getElementById('plateImgLabel').classList.add('hidden');
+          
+          const badge = p.status === "ENTRY" 
+            ? "<span class='status-parked'>🅿️ รถเข้า</span>" 
+            : (p.fee > 0 
+              ? `<span class='status-exited'>🚗 รถออก (${p.fee}฿)</span>`
+              : `<span class='status-exited'>🚗 รถออก (ฟรี)</span>`);
+          document.getElementById('statusBadge').innerHTML = badge;
+          fetchRecords();
+        } else {
+          document.getElementById('statusBadge').innerHTML = "<span class='text-red-400'>ไม่พบป้ายทะเบียน</span>";
+        }
+      } catch (e) { console.error(e); }
+    }
 
-        // Detected Plate
-        const detectedBox = document.createElement("div");
-        detectedBox.className = "image-box";
-        detectedBox.innerHTML = "<h4>🔍 Detected Plate</h4>";
+    // 3. WebSocket & Table
+    function connectWS() {
+      const ws = new WebSocket(WS_URL);
+      ws.onmessage = e => {
+        const msg = JSON.parse(e.data);
+        if(msg.type === 'summary') {
+          document.getElementById('sumIn').innerText = msg.in;
+          document.getElementById('sumOut').innerText = msg.out;
+          document.getElementById('sumPark').innerText = msg.park;
+          document.getElementById('sumMoney').innerText = msg.money;
+        }
+        if(msg.type === 'event') {
+          const div = document.createElement('div');
+          div.className = "p-3 bg-slate-50 border border-slate-100 rounded-lg text-sm flex justify-between items-center shadow-sm";
+          div.innerHTML = `<div><b class='text-slate-800'>${msg.plate}</b><br><small class='text-slate-400'>${msg.province}</small></div> 
+                           <span class='font-bold ${msg.status.includes('ENTRY') ? 'text-blue-500' : 'text-emerald-500'}'>${msg.status}</span>`;
+          const feed = document.getElementById('liveFeed');
+          feed.prepend(div);
+          if (feed.children.length > 10) feed.lastChild.remove();
+          fetchRecords();
+        }
+      };
+      ws.onclose = () => setTimeout(connectWS, 3000);
+    }
 
-        const detectedImg = document.createElement("img");
-        detectedImg.src = "data:image/jpeg;base64," + plate.preview;
+async function fetchRecords() {
+  try {
+    const dateInput = document.getElementById('dateFilter');
+    const d = dateInput ? dateInput.value : "";
 
-        const info = document.createElement("div");
-        info.className = "plate-info";
-        info.innerHTML = "<b>ทะเบียน:</b> " + plate.series_number +
-                         "<br><b>จังหวัด:</b> " + plate.province;
+    const res = await fetch('/records' + (d ? `?date=${d}` : ''));
+    const data = await res.json();
 
-        detectedBox.appendChild(detectedImg);
-        detectedBox.appendChild(info);
+    console.log("RECORDS:", data); // debug
 
-        comparison.appendChild(originalBox);
-        comparison.appendChild(detectedBox);
-        wrapper.appendChild(comparison);
-        resultsDiv.appendChild(wrapper);
-    });
+    const body = document.getElementById('recordsBody');
+    if (!body) return;
+
+    body.innerHTML = data.records.map(r => `
+      <tr>
+        <td class="font-bold text-slate-700">${r.plate}</td>
+        <td class="text-slate-500">${r.province}</td>
+        <td class="text-xs">${r.entry_time || "-"}</td>
+        <td class="text-xs">${r.exit_time || "-"}</td>
+        <td>${r.duration || "-"}</td>
+        <td class="font-bold text-blue-600">${r.fee || "-"}</td>
+        <td>
+          <span class="${
+            r.status === 'ENTRY' ? 'status-parked' : 'status-exited'
+          }">
+            ${r.status}
+          </span>
+        </td>
+      </tr>
+    `).join('');
+
+  } catch (e) {
+    console.error("FETCH ERROR:", e);
+  }
+}
+
+  window.onload = () => {
+    const dateInput = document.getElementById('dateFilter');
+    if (dateInput) {
+      dateInput.valueAsDate = new Date();
+    }
+    connectWS();
+    fetchRecords();
+    setInterval(fetchRecords, 2000);
+  window.startCamera = startCamera;
+  window.stopCamera = stopCamera;
+  window.switchCamera = switchCamera;
+  window.captureAndSend = captureAndSend;
+  window.uploadImage = uploadImage;
 };
-</script>
-
+  </script>
 </body>
 </html>
